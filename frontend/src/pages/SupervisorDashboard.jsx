@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://societal-challenges-problem-solving.onrender.com/api';
 
 function SupervisorDashboard() {
   const { currentUser, logout } = useAuth();
