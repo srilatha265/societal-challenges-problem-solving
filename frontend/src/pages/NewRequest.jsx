@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://societal-challenges-problem-solving.onrender.com/api';
 
 function NewRequest() {
   const navigate = useNavigate();
