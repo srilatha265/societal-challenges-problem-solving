@@ -34,13 +34,15 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '',           // ← CHANGE THIS IF YOUR PASSWORD IS DIFFERENT
-  database: 'city_problems_reporting',
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'city_problems_reporting',
+  port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : undefined
 });
 
 
