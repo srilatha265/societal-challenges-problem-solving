@@ -42,7 +42,10 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : undefined
+  ssl: false,
+});
+app.get('/', (req, res) => {
+  res.send('City Problem Reporting Platform - Backend is Live! DB Connected. Use /api routes');
 });
 
 
