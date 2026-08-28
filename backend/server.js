@@ -42,12 +42,29 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: false,
 });
+
 app.get('/', (req, res) => {
   res.send('City Problem Reporting Platform - Backend is Live! DB Connected. Use /api routes');
 });
 
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'API is working',
+    endpoints: [
+      'POST /api/login',
+      'POST /api/register',
+      'POST /api/approve',
+      'POST /api/delete-user',
+      'POST /api/request',
+      'POST /api/assign',
+      'POST /api/work-complete',
+      'POST /api/rate',
+      'POST /api/complaint',
+      'GET /api/data'
+    ]
+  });
+});
 
 (async () => {
   try {
@@ -68,14 +85,11 @@ async function query(sql, params = []) {
   }
 }
 
-
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-
   try {
-
     let rows = await query(
-      'SELECT * FROM supervisors WHERE username = ? AND password = ?',
+      'SELECT * FROM supervisors WHERE username =? AND password =?',
       [username, password]
     );
     if (rows.length > 0) {
@@ -83,7 +97,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     rows = await query(
-      'SELECT * FROM residents WHERE username = ? AND password = ?',
+      'SELECT * FROM residents WHERE username =? AND password =?',
       [username, password]
     );
     if (rows.length > 0) {
@@ -94,7 +108,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     rows = await query(
-      'SELECT * FROM workers WHERE username = ? AND password = ?',
+      'SELECT * FROM workers WHERE username =? AND password =?',
       [username, password]
     );
     if (rows.length > 0) {
@@ -113,12 +127,11 @@ app.post('/api/login', async (req, res) => {
 
 app.post('/api/register', async (req, res) => {
   const { role, username, password, name, phone, email, address } = req.body;
-  const table = role === 'resident' ? 'residents' : 'workers';
-
+  const table = role === 'resident'? 'residents' : 'workers';
   try {
     await query(
-      `INSERT INTO ${table} (full_name, username, password, phone, email, address, is_approved) 
-       VALUES (?, ?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO ${table} (full_name, username, password, phone, email, address, is_approved)
+       VALUES (?,?,?,?,?,?, 0)`,
       [name, username, password, phone || null, email || null, address || null]
     );
     res.json({ success: true, message: 'Registration successful! Waiting for supervisor approval.' });
@@ -133,10 +146,9 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/approve', async (req, res) => {
   const { id, role } = req.body;
-  const table = role === 'resident' ? 'residents' : 'workers';
-
+  const table = role === 'resident'? 'residents' : 'workers';
   try {
-    const result = await query(`UPDATE ${table} SET is_approved = 1 WHERE id = ?`, [id]);
+    const result = await query(`UPDATE ${table} SET is_approved = 1 WHERE id =?`, [id]);
     if (result.affectedRows === 0) {
       return res.json({ success: false, message: 'User not found or already approved' });
     }
@@ -149,10 +161,9 @@ app.post('/api/approve', async (req, res) => {
 
 app.post('/api/delete-user', async (req, res) => {
   const { id, role } = req.body;
-  const table = role === 'resident' ? 'residents' : 'workers';
-
+  const table = role === 'resident'? 'residents' : 'workers';
   try {
-    const result = await query(`DELETE FROM ${table} WHERE id = ?`, [id]);
+    const result = await query(`DELETE FROM ${table} WHERE id =?`, [id]);
     if (result.affectedRows === 0) {
       return res.json({ success: false, message: 'User not found' });
     }
@@ -165,11 +176,10 @@ app.post('/api/delete-user', async (req, res) => {
 
 app.post('/api/request', upload.single('attachment'), async (req, res) => {
   const { residentId, type, description } = req.body;
-  const filename = req.file ? req.file.filename : null;
-
+  const filename = req.file? req.file.filename : null;
   try {
     await query(
-      'INSERT INTO requests (resident_id, type, description, status, attachment) VALUES (?, ?, ?, "Pending", ?)',
+      'INSERT INTO requests (resident_id, type, description, status, attachment) VALUES (?,?,?, "Pending",?)',
       [residentId, type, description, filename]
     );
     res.json({ success: true });
@@ -181,10 +191,9 @@ app.post('/api/request', upload.single('attachment'), async (req, res) => {
 
 app.post('/api/assign', async (req, res) => {
   const { requestId, workerId } = req.body;
-
   try {
     const result = await query(
-      'UPDATE requests SET assigned_worker_id = ?, status = "Assigned" WHERE id = ?',
+      'UPDATE requests SET assigned_worker_id =?, status = "Assigned" WHERE id =?',
       [workerId, requestId]
     );
     if (result.affectedRows === 0) {
@@ -199,10 +208,9 @@ app.post('/api/assign', async (req, res) => {
 
 app.post('/api/work-complete', async (req, res) => {
   const { requestId } = req.body;
-
   try {
     const result = await query(
-      'UPDATE requests SET status = "Completed" WHERE id = ?',
+      'UPDATE requests SET status = "Completed" WHERE id =?',
       [requestId]
     );
     if (result.affectedRows === 0) {
@@ -217,11 +225,10 @@ app.post('/api/work-complete', async (req, res) => {
 
 app.post('/api/rate', upload.single('feedbackAttachment'), async (req, res) => {
   const { requestId, rating, feedback } = req.body;
-  const filename = req.file ? req.file.filename : null;
-
+  const filename = req.file? req.file.filename : null;
   try {
     const result = await query(
-      'UPDATE requests SET rating = ?, feedback = ?, feedback_attachment = ? WHERE id = ?',
+      'UPDATE requests SET rating =?, feedback =?, feedback_attachment =? WHERE id =?',
       [rating, feedback || null, filename, requestId]
     );
     if (result.affectedRows === 0) {
@@ -236,11 +243,10 @@ app.post('/api/rate', upload.single('feedbackAttachment'), async (req, res) => {
 
 app.post('/api/complaint', upload.single('attachment'), async (req, res) => {
   const { workerId, description } = req.body;
-  const filename = req.file ? req.file.filename : null;
-
+  const filename = req.file? req.file.filename : null;
   try {
     await query(
-      'INSERT INTO complaints (worker_id, description, attachment) VALUES (?, ?, ?)',
+      'INSERT INTO complaints (worker_id, description, attachment) VALUES (?,?,?)',
       [workerId, description, filename]
     );
     res.json({ success: true });
@@ -258,8 +264,8 @@ app.get('/api/data', async (req, res) => {
     const pendingWorkers = await query('SELECT * FROM workers WHERE is_approved = 0');
     const requests = await query('SELECT * FROM requests');
     const complaints = await query(
-      `SELECT c.*, w.full_name as worker_name 
-       FROM complaints c 
+      `SELECT c.*, w.full_name as worker_name
+       FROM complaints c
        JOIN workers w ON c.worker_id = w.id`
     );
 
